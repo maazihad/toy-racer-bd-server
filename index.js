@@ -62,5 +62,8 @@ run().catch(console.dir);
 //================================================================Listen
 app.listen(port, () => {
    console.log(`Toy racer bd is running on port : ${port}`);
-})
+});
 
+
+// export API
+module.exports = app;
