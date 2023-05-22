@@ -153,23 +153,23 @@ async function run() {
       });
 
       //=============================================================Put : Update route
-      app.put('/myToys/:id', async (req, res) => {
+      app.put("/myToys/:id", async (req, res) => {
          const id = req.params.id;
          const body = req.body;
          const filter = {
             _id: new ObjectId(id)
          };
-         // const options = {
-         //    upsert: true
-         // };
-         const updateToys = {
+         const options = {
+            upsert: true
+         };
+         const updatedToys = {
             $set: {
                price: body.price,
                quantity: body.quantity,
                details: body.details
             }
          };
-         const result = await addAToyCollections.updateOne(filter, updateToys);
+         const result = await addAToyCollections.updateOne(filter, updatedToys, options);
          console.log(result);
          res.send(result);
       });
