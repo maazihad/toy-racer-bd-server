@@ -134,7 +134,14 @@ async function run() {
 
 
       // another way =============================================get : my toys route
-
+      app.get("/myToys/:email", async (req, res) => {
+         const sellerEmail = {
+            email: req.params.email
+         };
+         const toys = await addAToyCollections.find(sellerEmail).toArray();
+         res.send(toys);
+         console.log(toys);
+      });
 
 
       // ===========================================================Post: My Toys route
