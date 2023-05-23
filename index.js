@@ -26,138 +26,133 @@ const client = new MongoClient(uri, {
    }
 });
 async function run() {
-   try {
-      // ====================Connect the client to the server	(optional starting in v4.7)
-      // =====================await client.connect();
+   // ====================Connect the client to the server	(optional starting in v4.7)
 
-      //==============================================================Collections//
-      const galleryCollections = client.db('toy_racer').collection('galleries');
-      const addAToyCollections = client.db('toy_racer').collection('addToy');
-      const allOfToys = client.db('toy_racer').collection('allToys');
-      const topRelatedToys = client.db('toy_racer').collection('topRelatedProducts');
-      const shopByCategoryCollections = client.db('toy_racer').collection('shopByCategories');
-      //=============================================================Indexing : for search
-      const indexKeys = { toyName: 1 };
-      const indexOptions = { name: "toyName" };
-      const result = await allOfToys.createIndex(indexKeys, indexOptions);
+   //==============================================================Collections//
+   const galleryCollections = client.db('toy_racer').collection('galleries');
+   const addAToyCollections = client.db('toy_racer').collection('addToy');
+   const allOfToys = client.db('toy_racer').collection('allToys');
+   const topRelatedToys = client.db('toy_racer').collection('topRelatedProducts');
+   const shopByCategoryCollections = client.db('toy_racer').collection('shopByCategories');
+   //=============================================================Indexing : for search
+   const indexKeys = { toyName: 1 };
+   const indexOptions = { name: "toyName" };
+   const result = await allOfToys.createIndex(indexKeys, indexOptions);
+   console.log(result);
+
+   //============================================================get :gallery route
+   app.get('/galleries', async (req, res) => {
+      const result = await galleryCollections.find({}).toArray();
+      res.send(result);
+   });
+
+   // ==========================================================GET : all toys route
+   app.get('/allToys', async (req, res) => {
+      const result = await allOfToys.find({}).toArray();
+      res.send(result);
+   });
+
+   // ============================================================Get : single toys route
+   app.get('/allToys/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const options = {
+         projection: {
+            picture: 1,
+            name: 1,
+            price: 1,
+            sellerName: 1,
+            sellerEmail: 1,
+            rating: 1,
+            availableQuantity: 1,
+            details: 1,
+         },
+      };
+      const toys = await allOfToys.findOne(query, options);
+      res.send(toys);
+      // console.log(toys);
+   });
+
+   // ==========================================================Search Implement
+   app.get("/searchByToyName/:text", async (req, res) => {
+      const searchText = req.params.text;
+      const result = await allOfToys.find({
+         $or: [
+            { toyName: { $regex: searchText, $options: "i" } }
+         ],
+      }).toArray();
+      res.send(result);
+   });
+
+   //  =============================================get : my toys route & sorting
+   app.get("/myToys/:email", async (req, res) => {
+      const sellerEmail = {
+         email: req.params.email
+      };
+      const toys = await addAToyCollections.find(sellerEmail).sort({ createdAt: -1 }).toArray();
+      res.send(toys);
+      // console.log(toys);
+   });
+
+   //======================================================Get : Shot by Category
+   app.get("/shopByCatagories", async (req, res) => {
+      const result = await shopByCategoryCollections.find({}).toArray();
+      res.send(result);
+   });
+
+   //===========================================================Get : Top Related Toys
+   app.get('/topRelatedToys', async (req, res) => {
+      const result = await topRelatedToys.find({}).toArray();
+      res.send(result);
+   });
+
+
+   // ===========================================================Post: My Toys route
+   app.post('/myToys', async (req, res) => {
+      const addAToy = req.body;
+      addAToy.createdAt = new Date();
+      const result = await addAToyCollections.insertOne(addAToy);
+      res.send(result);
+      // console.log(result);
+   });
+
+   //=============================================================Put : Update route
+   app.put("/myToys/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+      const filter = {
+         _id: new ObjectId(id)
+      };
+      const options = {
+         upsert: true
+      };
+      const updatedToys = {
+         $set: {
+            price: body.price,
+            quantity: body.quantity,
+            details: body.details
+         }
+      };
+      const result = await addAToyCollections.updateOne(filter, updatedToys, options);
       console.log(result);
+      res.send(result);
+   });
 
-      //============================================================get :gallery route
-      app.get('/galleries', async (req, res) => {
-         const result = await galleryCollections.find({}).toArray();
-         res.send(result);
-      });
+   //==============================================================Delete : MyToy route
+   app.delete('/myToys/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {
+         _id: new ObjectId(id)
+      };
+      const result = await addAToyCollections.deleteOne(query);
+      // console.log(result);
+      res.send(result);
+   });
 
-      // ==========================================================GET : all toys route
-      app.get('/allToys', async (req, res) => {
-         const result = await allOfToys.find({}).toArray();
-         res.send(result);
-      });
+   // =============================Send a ping to confirm a successful connection
+   await client.db("admin").command({ ping: 1 });
+   console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-      // ============================================================Get : single toys route
-      app.get('/allToys/:id', async (req, res) => {
-         const id = req.params.id;
-         const query = { _id: new ObjectId(id) };
-         const options = {
-            projection: {
-               picture: 1,
-               name: 1,
-               price: 1,
-               sellerName: 1,
-               sellerEmail: 1,
-               rating: 1,
-               availableQuantity: 1,
-               details: 1,
-            },
-         };
-         const toys = await allOfToys.findOne(query, options);
-         res.send(toys);
-         // console.log(toys);
-      });
-
-      // ==========================================================Search Implement
-      app.get("/searchByToyName/:text", async (req, res) => {
-         const searchText = req.params.text;
-         const result = await allOfToys.find({
-            $or: [
-               { toyName: { $regex: searchText, $options: "i" } }
-            ],
-         }).toArray();
-         res.send(result);
-      });
-
-      //  =============================================get : my toys route & sorting
-      app.get("/myToys/:email", async (req, res) => {
-         const sellerEmail = {
-            email: req.params.email
-         };
-         const toys = await addAToyCollections.find(sellerEmail).sort({ createdAt: -1 }).toArray();
-         res.send(toys);
-         // console.log(toys);
-      });
-
-      //======================================================Get : Shot by Category
-      app.get("/shopByCatagories", async (req, res) => {
-         const result = await shopByCategoryCollections.find({}).toArray();
-         res.send(result);
-      });
-
-      //===========================================================Get : Top Related Toys
-      app.get('/topRelatedToys', async (req, res) => {
-         const result = await topRelatedToys.find({}).toArray();
-         res.send(result);
-      });
-
-
-      // ===========================================================Post: My Toys route
-      app.post('/myToys', async (req, res) => {
-         const addAToy = req.body;
-         addAToy.createdAt = new Date();
-         const result = await addAToyCollections.insertOne(addAToy);
-         res.send(result);
-         // console.log(result);
-      });
-
-      //=============================================================Put : Update route
-      app.put("/myToys/:id", async (req, res) => {
-         const id = req.params.id;
-         const body = req.body;
-         const filter = {
-            _id: new ObjectId(id)
-         };
-         const options = {
-            upsert: true
-         };
-         const updatedToys = {
-            $set: {
-               price: body.price,
-               quantity: body.quantity,
-               details: body.details
-            }
-         };
-         const result = await addAToyCollections.updateOne(filter, updatedToys, options);
-         console.log(result);
-         res.send(result);
-      });
-
-      //==============================================================Delete : MyToy route
-      app.delete('/myToys/:id', async (req, res) => {
-         const id = req.params.id;
-         const query = {
-            _id: new ObjectId(id)
-         };
-         const result = await addAToyCollections.deleteOne(query);
-         // console.log(result);
-         res.send(result);
-      });
-
-      // =============================Send a ping to confirm a successful connection
-      await client.db("admin").command({ ping: 1 });
-      console.log("Pinged your deployment. You successfully connected to MongoDB!");
-   } finally {
-      // Ensures that the client will close when you finish/error
-      // await client.close();
-   }
 }
 run().catch(console.dir);
 
