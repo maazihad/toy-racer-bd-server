@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-// const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // =================================================================Create Express 
@@ -10,16 +9,14 @@ const port = process.env.PORT || 5555;
 // ===============================================================middleware
 app.use(cors());
 app.use(express.json());
-
 // ===============================================================Starting route
 app.get('/', (req, res) => {
    res.send('Toy racer bd is running ................');
 });
+// ================================================================MongoDB URI
+const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
+// const uri = "mongodb://127.0.0.1:27017";
 
-// ================================================================MongoDB
-
-// const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
-const uri = "mongodb://127.0.0.1:27017";
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
    serverApi: {
@@ -28,22 +25,6 @@ const client = new MongoClient(uri, {
       deprecationErrors: true,
    }
 });
-// =====================================================================Verify Jot
-// const verifyJWT = (req, res, next) => {
-//    const authorization = req.headers.authorization;
-//    if (!authorization) {
-//       return res.status(401).send({ error: true, message: "unauthorized access" });
-//    }
-//    const token = authorization.split(' ')[1];
-//    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
-//       if (error) {
-//          return res.status(401).send({ error: true, message: "unauthorized access." });
-//       }
-//       req.decoded = decoded;
-//       next();
-//    });
-// };
-
 async function run() {
    try {
       // Connect the client to the server	(optional starting in v4.7)
@@ -53,15 +34,10 @@ async function run() {
       const galleryCollections = client.db('toy_racer').collection('galleries');
       const addAToyCollections = client.db('toy_racer').collection('myToys');
       const allToys = client.db('toy_racer').collection('allToys');
-      // =============================================================Post :JWT
-      // app.post('/jwt', (req, res) => {
-      //    const user = req.body;
-      //    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' });
-      //    res.send({ token });
-      // });
 
 
-      //==============================================
+
+      //=============================================================Indexing : for search
       const indexKeys = { toyName: 1 };
       const indexOptions = { name: "toyName" };
       const result = await allToys.createIndex(indexKeys, indexOptions);
@@ -100,7 +76,7 @@ async function run() {
          };
          const toys = await allToys.findOne(query, options);
          res.send(toys);
-         console.log(toys);
+         // console.log(toys);
       });
 
 
@@ -117,20 +93,7 @@ async function run() {
       });
 
 
-      // ===========================================================GET : My toys route
-      // app.get('/myToys', verifyJWT, async (req, res) => {
-      //    const decoded = req.decoded;
-      //    if (decoded.email !== req.query.email) {
-      //       return res.status(403).send({ error: 1, message: "Access denied" });
-      //    }
-      //    let query = {};
-      //    if (req.query?.email) {
-      //       query = { email: req.query.email };
-      //    };
-      //    const result = await addAToyCollections.find(query).toArray();
-      //    res.send(result);
-      //    // console.log(result);
-      // });
+
 
 
       // another way =============================================get : my toys route
@@ -138,15 +101,16 @@ async function run() {
          const sellerEmail = {
             email: req.params.email
          };
-         const toys = await addAToyCollections.find(sellerEmail).toArray();
+         const toys = await addAToyCollections.find(sellerEmail).sort({ createdAt: -1 }).toArray();
          res.send(toys);
-         console.log(toys);
+         // console.log(toys);
       });
 
 
       // ===========================================================Post: My Toys route
       app.post('/myToys', async (req, res) => {
          const addAToy = req.body;
+         addAToy.createdAt = new Date();
          const result = await addAToyCollections.insertOne(addAToy);
          res.send(result);
          // console.log(result);
@@ -174,6 +138,7 @@ async function run() {
          res.send(result);
       });
 
+
       //==============================================================Delete : MyToy route
 
       app.delete('/myToys/:id', async (req, res) => {
@@ -182,7 +147,7 @@ async function run() {
             _id: new ObjectId(id)
          };
          const result = await addAToyCollections.deleteOne(query);
-         console.log(result);
+         // console.log(result);
          res.send(result);
       });
 
@@ -205,3 +170,58 @@ app.listen(port, () => {
 
 // =============================================================export API
 module.exports = app;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// =====================================================================Verify Jot
+// const verifyJWT = (req, res, next) => {
+//    const authorization = req.headers.authorization;
+//    if (!authorization) {
+//       return res.status(401).send({ error: true, message: "unauthorized access" });
+//    }
+//    const token = authorization.split(' ')[1];
+//    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+//       if (error) {
+//          return res.status(401).send({ error: true, message: "unauthorized access." });
+//       }
+//       req.decoded = decoded;
+//       next();
+//    });
+// };
+
+// =============================
+ // =============================================================Post :JWT
+      // app.post('/jwt', (req, res) => {
+      //    const user = req.body;
+      //    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' });
+      //    res.send({ token });
+      // });
+
+
+          // ===========================================================GET : My toys route
+      // app.get('/myToys', verifyJWT, async (req, res) => {
+      //    const decoded = req.decoded;
+      //    if (decoded.email !== req.query.email) {
+      //       return res.status(403).send({ error: 1, message: "Access denied" });
+      //    }
+      //    let query = {};
+      //    if (req.query?.email) {
+      //       query = { email: req.query.email };
+      //    };
+      //    const result = await addAToyCollections.find(query).toArray();
+      //    res.send(result);
+      //    // console.log(result);
+      // });
