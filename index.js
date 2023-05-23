@@ -14,10 +14,10 @@ app.get('/', (req, res) => {
    res.send('Toy racer bd is running ................');
 });
 // ================================================================MongoDB URI
-const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
-// const uri = "mongodb://127.0.0.1:27017";
+// const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
+const uri = "mongodb://127.0.0.1:27017";
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// ========Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
    serverApi: {
       version: ServerApiVersion.v1,
@@ -27,34 +27,30 @@ const client = new MongoClient(uri, {
 });
 async function run() {
    try {
-      // Connect the client to the server	(optional starting in v4.7)
-      // await client.connect();
+      // ====================Connect the client to the server	(optional starting in v4.7)
+      // =====================await client.connect();
 
       //==============================================================Collections//
       const galleryCollections = client.db('toy_racer').collection('galleries');
-      const addAToyCollections = client.db('toy_racer').collection('myToys');
-      const allToys = client.db('toy_racer').collection('allToys');
-
-
+      const addAToyCollections = client.db('toy_racer').collection('addToy');
+      const allOfToys = client.db('toy_racer').collection('allToys');
+      const topRelatedToys = client.db('toy_racer').collection('topRelatedProducts');
 
       //=============================================================Indexing : for search
       const indexKeys = { toyName: 1 };
       const indexOptions = { name: "toyName" };
-      const result = await allToys.createIndex(indexKeys, indexOptions);
-      // console.log(result);
-      // console.log(
-      //    "Pinged your deployment. You successfully connected to MongoDB!"
-      // );
+      const result = await allOfToys.createIndex(indexKeys, indexOptions);
+      console.log(result);
+
       //============================================================get :gallery route
       app.get('/galleries', async (req, res) => {
          const result = await galleryCollections.find({}).toArray();
          res.send(result);
       });
 
-
       // ==========================================================GET : all toys route
       app.get('/allToys', async (req, res) => {
-         const result = await allToys.find({}).toArray();
+         const result = await allOfToys.find({}).toArray();
          res.send(result);
       });
 
@@ -74,17 +70,15 @@ async function run() {
                details: 1,
             },
          };
-         const toys = await allToys.findOne(query, options);
+         const toys = await allOfToys.findOne(query, options);
          res.send(toys);
          // console.log(toys);
       });
 
-
-
       // ==========================================================Search Implement
       app.get("/searchByToyName/:text", async (req, res) => {
          const searchText = req.params.text;
-         const result = await allToys.find({
+         const result = await allOfToys.find({
             $or: [
                { toyName: { $regex: searchText, $options: "i" } }
             ],
@@ -92,11 +86,7 @@ async function run() {
          res.send(result);
       });
 
-
-
-
-
-      // another way =============================================get : my toys route
+      //  =============================================get : my toys route & sorting
       app.get("/myToys/:email", async (req, res) => {
          const sellerEmail = {
             email: req.params.email
@@ -104,6 +94,12 @@ async function run() {
          const toys = await addAToyCollections.find(sellerEmail).sort({ createdAt: -1 }).toArray();
          res.send(toys);
          // console.log(toys);
+      });
+
+      //===========================================================Get : Top Related Toys
+      app.get('/topRelatedToys', async (req, res) => {
+         const result = await topRelatedToys.find({}).toArray();
+         res.send(result);
       });
 
 
@@ -138,9 +134,7 @@ async function run() {
          res.send(result);
       });
 
-
       //==============================================================Delete : MyToy route
-
       app.delete('/myToys/:id', async (req, res) => {
          const id = req.params.id;
          const query = {
@@ -151,8 +145,7 @@ async function run() {
          res.send(result);
       });
 
-
-      // Send a ping to confirm a successful connection
+      // =============================Send a ping to confirm a successful connection
       await client.db("admin").command({ ping: 1 });
       console.log("Pinged your deployment. You successfully connected to MongoDB!");
    } finally {
@@ -166,7 +159,6 @@ run().catch(console.dir);
 app.listen(port, () => {
    console.log(`Toy racer bd is running on port : ${port}`);
 });
-
 
 // =============================================================export API
 module.exports = app;
