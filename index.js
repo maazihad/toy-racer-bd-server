@@ -14,8 +14,8 @@ app.get('/', (req, res) => {
    res.send('Toy racer bd is running ................');
 });
 // ================================================================MongoDB URI
-// const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
-const uri = "mongodb://127.0.0.1:27017";
+const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
+// const uri = "mongodb://127.0.0.1:27017";
 
 // ========Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -35,7 +35,7 @@ async function run() {
       const addAToyCollections = client.db('toy_racer').collection('addToy');
       const allOfToys = client.db('toy_racer').collection('allToys');
       const topRelatedToys = client.db('toy_racer').collection('topRelatedProducts');
-
+      const shopByCategoryCollections = client.db('toy_racer').collection('shopByCategories');
       //=============================================================Indexing : for search
       const indexKeys = { toyName: 1 };
       const indexOptions = { name: "toyName" };
@@ -94,6 +94,12 @@ async function run() {
          const toys = await addAToyCollections.find(sellerEmail).sort({ createdAt: -1 }).toArray();
          res.send(toys);
          // console.log(toys);
+      });
+
+      //======================================================Get : Shot by Category
+      app.get("/shopByCatagories", async (req, res) => {
+         const result = await shopByCategoryCollections.find({}).toArray();
+         res.send(result);
       });
 
       //===========================================================Get : Top Related Toys
