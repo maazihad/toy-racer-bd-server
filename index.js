@@ -14,8 +14,8 @@ app.get('/', (req, res) => {
    res.send('Toy racer bd is running ................');
 });
 // ================================================================MongoDB URI
-const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
-// const uri = "mongodb://127.0.0.1:27017";
+// const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
+const uri = "mongodb://127.0.0.1:27017";
 
 // ========Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
