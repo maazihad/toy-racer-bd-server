@@ -14,8 +14,8 @@ app.get('/', (req, res) => {
    res.send('Toy racer bd is running ................');
 });
 // ================================================================MongoDB URI
-// const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
-const uri = "mongodb://127.0.0.1:27017";
+const uri = `mongodb+srv://${process.env.USER_DB}:${process.env.USER_PASS}@cluster0.xu5udz0.mongodb.net/?retryWrites=true&w=majority`;
+// const uri = "mongodb://127.0.0.1:27017";
 
 // ========Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -35,10 +35,10 @@ async function run() {
    const topRelatedToys = client.db('toy_racer').collection('topRelatedProducts');
    const shopByCategoryCollections = client.db('toy_racer').collection('shopByCategories');
    //=============================================================Indexing : for search
-   const indexKeys = { toyName: 1 };
-   const indexOptions = { name: "toyName" };
-   const result = await allOfToys.createIndex(indexKeys, indexOptions);
-   console.log(result);
+   // const indexKeys = { toyName: 1 };
+   // const indexOptions = { name: "toyName" };
+   // const result = await allOfToys.createIndex(indexKeys, indexOptions);
+   // console.log(result);
 
    //============================================================get :gallery route
    app.get('/galleries', async (req, res) => {
@@ -53,13 +53,13 @@ async function run() {
    });
 
    // ============================================================Get : single toys route
-   app.get('/allToys/:id', async (req, res) => {
+   app.get('/singleToy/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const options = {
          projection: {
             picture: 1,
-            name: 1,
+            toyName: 1,
             price: 1,
             sellerName: 1,
             sellerEmail: 1,
@@ -117,7 +117,7 @@ async function run() {
    });
 
    //=============================================================Put : Update route
-   app.put("/myToys/:id", async (req, res) => {
+   app.put('/updateToy/:id', async (req, res) => {
       const id = req.params.id;
       const body = req.body;
       const filter = {
