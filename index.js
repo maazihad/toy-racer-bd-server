@@ -33,7 +33,7 @@ async function run() {
    const addAToyCollections = client.db('toy_racer').collection('addToy');
    const allOfToys = client.db('toy_racer').collection('allToys');
    const topRelatedToys = client.db('toy_racer').collection('topRelatedProducts');
-   const shopByCategoryCollections = client.db('toy_racer').collection('shopByCategories');
+   const toyCollections = client.db('toy_racer').collection('toys');
    //=============================================================Indexing : for search
    // const indexKeys = { toyName: 1 };
    // const indexOptions = { name: "toyName" };
@@ -95,9 +95,26 @@ async function run() {
    });
 
    //======================================================Get : Shot by Category
-   app.get("/shopByCatagories", async (req, res) => {
-      const result = await shopByCategoryCollections.find({}).toArray();
+   app.get("/shopToys", async (req, res) => {
+      const result = await toyCollections.find({}).toArray();
       res.send(result);
+   });
+
+   app.get('/toyDetails/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const options = {
+         projection: {
+            picture: 1,
+            toyName: 1,
+            price: 1,
+            category: 1,
+            rating: 1,
+            details: 1,
+         },
+      };
+      const toy = await toyCollections.findOne(query, options);
+      res.send(toy);
    });
 
    //===========================================================Get : Top Related Toys
